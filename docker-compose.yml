@@ -197,5 +197,12 @@ services:
       - CASSANDRA_PASSWORD=cassandra
     networks:
       - confluent
+  streamlit-app:
+    image: your_image_name
+    ports:
+      - "8501:8501"  # Map the container port to a host port if needed
+    networks:
+      - confluent
+
 networks:
   confluent:

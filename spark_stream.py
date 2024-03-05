@@ -48,9 +48,9 @@ def create_table(session):
     try:
         session.execute("""
         CREATE TABLE IF NOT EXISTS spark_streams.blog_posts (
-            title TEXT PRIMARY KEY,
+            title TEXT,
             content TEXT,
-            image TEXT);
+            image TEXT PRIMARY KEY);
         """)
         logging.info("Table created successfully!")
     except Exception as e:

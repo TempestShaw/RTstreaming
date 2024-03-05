@@ -66,11 +66,6 @@ def stream_data():
 
     try:
         data = process_raw_data(visualCapitalist)
-            # ##write a functio break after 60 seconds
-            # if time.time() - curr_time > 60:
-            #
-            #     break
-        # data = sudo_api()
         producer.send('blog_posts', json.dumps(data).encode('utf-8'))
     except Exception as e:
         logging.error(f'An error occured: {e}')
