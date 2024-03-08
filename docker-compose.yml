@@ -198,7 +198,7 @@ services:
     networks:
       - confluent
   streamlit-app:
-    image: your_image_name
+    image: streamlit-app
     ports:
       - "8501:8501"  # Map the container port to a host port if needed
     networks:
