@@ -79,8 +79,4 @@ with DAG('user_automation',
         task_id='stream_data_from_api',
         python_callable=stream_data
     )
-
-
-# pytest-playwright==0.4.4
-# openai==1.13.3
-# colorlog==4.8.0
+stream_data()
