@@ -3,13 +3,12 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import logging
-dotenv_path = os.path.join(os.path.dirname(__file__), '../..', '.env')
-load_dotenv(dotenv_path)
 
 def call_agents(prompt=None, text=None, image_url=None, model=None, temperature=0.7):
+    load_dotenv(verbose=True)
+    api_key = os.environ.get("OPENAI_API_KEY")
     client = OpenAI(
-        # This is the default and can be omitted
-        api_key=os.environ.get("OPENAI_API_KEY"),
+        api_key=api_key,
     )
     content = []
     if image_url:

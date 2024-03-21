@@ -1,72 +1,76 @@
-# import uuid
-# from datetime import datetime
-# from airflow import DAG
-# from airflow.operators.python import PythonOperator
-#
-# default_args = {
-#     'owner': 'airscholar',
-#     'start_date': datetime(2023, 9, 3, 10, 00)
-# }
-#
-#
-# def get_data():
-#     import requests
-#
-#     res = requests.get("https://randomuser.me/api/")
-#     res = res.json()
-#     res = res['results'][0]
-#
-#     return res
-#
-#
-# def format_data(res):
-#     data = {}
-#     location = res['location']
-#     data['id'] = str(uuid.uuid4())
-#     data['first_name'] = res['name']['first']
-#     data['last_name'] = res['name']['last']
-#     data['gender'] = res['gender']
-#     data['address'] = f"{str(location['street']['number'])} {location['street']['name']}, " \
-#                       f"{location['city']}, {location['state']}, {location['country']}"
-#     data['post_code'] = location['postcode']
-#     data['email'] = res['email']
-#     data['username'] = res['login']['username']
-#     data['dob'] = res['dob']['date']
-#     data['registered_date'] = res['registered']['date']
-#     data['phone'] = res['phone']
-#     data['picture'] = res['picture']['medium']
-#
-#     return data
-#
-#
-# def stream_data():
-#     import json
-#     from kafka import KafkaProducer
-#     import time
-#     import logging
-#
-#     producer = KafkaProducer(
-#         bootstrap_servers=['broker:29092'], max_block_ms=5000)
-#     curr_time = time.time()
-#
-#     while True:
-#         if time.time() > curr_time + 60:  # 1 minute
-#             break
-#         try:
-#             res = get_data()
-#             res = format_data(res)
-#             producer.send('users_created', json.dumps(res).encode('utf-8'))
-#         except Exception as e:
-#             logging.error(f'An error occured: {e}')
-#             continue
-#
-#
-# with DAG('user_automation',
-#          default_args=default_args,
-#          schedule_interval='@daily',
-#          catchup=False) as dag:
-#
-#     streaming_task = PythonOperator(
-#         task_id='stream_data_from_api',
-#         python_callable=stream_data
-#     )
+from datetime import datetime
+from dotenv import load_dotenv
+import prompt
+from scrapping import *  # Assuming Scrapper is defined in this module
+from utils import *
+from prompt import *
+import logging
+import asyncio
+
+default_args = {
+    'owner': 'airscholar',
+    'start_date': datetime(2023, 9, 3, 10, 00)
+}
+# Configure logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+async def scrapping(website):
+    scraper = Scraper()
+    return await scraper.scrap_from_website(website)
+
+
+def process_raw_data(website):
+    title, content, image_src = asyncio.run(scrapping(website))
+    if image_src:
+        image_description = call_agents(
+            prompt=dataprompt,
+            text="请根据图片描述。",
+            image_url=image_src,
+            model='gpt-4-vision-preview',
+            temperature=0.3)
+
+        logging.info(f"Image description: {image_description}")
+
+        redreturn = call_agents(
+            prompt=redprompt,
+            text=f"""
+                标题:{title}
+                内容:{content}
+                    {image_description}""",
+            model='gpt-4-0125-preview',
+            temperature=0.3)
+
+        logging.info(f"Red return: {redreturn}")
+
+        data = json_parsing(redreturn)
+
+        title = data["标题"]
+        content = data["稿子正文"]
+        data = {"title": title, "content": content, "image": image_src}
+        return data
+
+
+def stream_data():
+    import json
+    from kafka import KafkaProducer
+    import time
+    import logging
+    load_dotenv(verbose=True)
+    producer = KafkaProducer(bootstrap_servers=['broker:29092'], max_block_ms=5000)
+    curr_time = time.time()
+
+    try:
+        data = process_raw_data(visualCapitalist)
+        producer.send('blog_posts', json.dumps(data).encode('utf-8'))
+    except Exception as e:
+        logging.error(f'An error occured: {e}')
+
+
+def main():
+    stream_data()
+
+
+if __name__ == "__main__":
+    main()

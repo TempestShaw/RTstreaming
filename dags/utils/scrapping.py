@@ -10,12 +10,12 @@ visualCapitalist = {
 import logging
 import time
 from playwright.async_api import async_playwright
-
+from retry import retry
 class Scraper:
     """
     This class provides a method to scrap data from a website using Playwright.
     """
-
+    @retry(tries=3, delay=2)
     async def scrap_from_website(self, website_info):
         """
         Scrapes data from a website using Playwright.
@@ -26,6 +26,7 @@ class Scraper:
         Returns:
             tuple: A tuple containing title, content, and image source.
         """
+
         start_time = time.time()
         logging.info('Scraping data from website...')
         async with async_playwright() as p:
@@ -73,3 +74,5 @@ class Scraper:
                 return title, content, image_src
             else:
                 raise ValueError("Latest post element not found.")
+
+

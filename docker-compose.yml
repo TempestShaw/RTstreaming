@@ -203,6 +203,11 @@ services:
       - "8501:8501"  # Map the container port to a host port if needed
     networks:
       - confluent
-
+  playwright-scraper:
+    image: playwright-scraper
+    container_name: playwright
+    env_file: .env
+    networks:
+      - confluent
 networks:
   confluent:

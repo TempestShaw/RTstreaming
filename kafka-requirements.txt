@@ -1,0 +1,6 @@
+kafka-python==2.0.2
+openai==1.13.3
+colorlog==4.8.0
+python-dotenv==1.0.1
+playwright==1.41.2
+retry==0.9.2
